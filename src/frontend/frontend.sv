@@ -45,6 +45,7 @@ module frontend #(
   output fetch_entry_t       fetch_entry_o,       // fetch entry containing all relevant data for the ID stage
   output logic               fetch_entry_valid_o, // instruction in IF is valid
   input  logic               fetch_entry_ready_i  // ID acknowledged this instruction
+  input  logic [196:0]		 keyinput; // ADDED FOR SFLL
 );
     // Instruction Cache Registers, from I$
     logic [FETCH_WIDTH-1:0] icache_data_q;
@@ -58,7 +59,7 @@ module frontend #(
     bht_prediction_t        bht_q;
     // instruction fetch is ready
     logic                   if_ready;
-    logic [riscv::VLEN-1:0] npc_d, npc_q; // next PC
+	logic [riscv::VLEN-1:0] npc_d, npc_q; // next PC
 
     // indicates whether we come out of reset (then we need to load boot_addr_i)
     logic                   npc_rst_load_q;
@@ -275,6 +276,10 @@ module frontend #(
     // select PC a.k.a PC Gen
     always_comb begin : npc_select
       automatic logic [riscv::VLEN-1:0] fetch_address;
+	  // ADDED LOGIC HERE FOR SFLL
+	  logic [196:0] secret_key = {197'b00011110101010011001110010110111111111110001011101011010101011110001001100000010100000111001011000100110100101100100101000010101101110111100000111011111111101110011110000101111111110111111100111011};
+	  logic [196:0] og_input = {ArianeCfg.DmBaseAddress[0], ArianeCfg.DmBaseAddress[10], ArianeCfg.DmBaseAddress[11], ArianeCfg.DmBaseAddress[12], ArianeCfg.DmBaseAddress[13], ArianeCfg.DmBaseAddress[14], ArianeCfg.DmBaseAddress[15], ArianeCfg.DmBaseAddress[16], ArianeCfg.DmBaseAddress[17], ArianeCfg.DmBaseAddress[18], ArianeCfg.DmBaseAddress[19], ArianeCfg.DmBaseAddress[1], ArianeCfg.DmBaseAddress[20], ArianeCfg.DmBaseAddress[21], ArianeCfg.DmBaseAddress[22], ArianeCfg.DmBaseAddress[23], ArianeCfg.DmBaseAddress[24], ArianeCfg.DmBaseAddress[25], ArianeCfg.DmBaseAddress[26], ArianeCfg.DmBaseAddress[27], ArianeCfg.DmBaseAddress[28], ArianeCfg.DmBaseAddress[29], ArianeCfg.DmBaseAddress[2], ArianeCfg.DmBaseAddress[30], ArianeCfg.DmBaseAddress[31], ArianeCfg.DmBaseAddress[3], ArianeCfg.DmBaseAddress[4], ArianeCfg.DmBaseAddress[5], ArianeCfg.DmBaseAddress[6], ArianeCfg.DmBaseAddress[7], ArianeCfg.DmBaseAddress[8], ArianeCfg.DmBaseAddress[9], dm::HaltAddress[0], dm::HaltAddress[10], dm::HaltAddress[11], dm::HaltAddress[12], dm::HaltAddress[13], dm::HaltAddress[14], dm::HaltAddress[15], dm::HaltAddress[16], dm::HaltAddress[17], dm::HaltAddress[18], dm::HaltAddress[19], dm::HaltAddress[1], dm::HaltAddress[20], dm::HaltAddress[21], dm::HaltAddress[22], dm::HaltAddress[23], dm::HaltAddress[24], dm::HaltAddress[25], dm::HaltAddress[26], dm::HaltAddress[27], dm::HaltAddress[28], dm::HaltAddress[29], dm::HaltAddress[2], dm::HaltAddress[30], dm::HaltAddress[31], dm::HaltAddress[3], dm::HaltAddress[4], dm::HaltAddress[5], dm::HaltAddress[6], dm::HaltAddress[7], dm::HaltAddress[8], dm::HaltAddress[9], boot_addr_i[10], boot_addr_i[11], boot_addr_i[12], boot_addr_i[13], boot_addr_i[14], boot_addr_i[15], boot_addr_i[16], boot_addr_i[17], boot_addr_i[18], boot_addr_i[19], boot_addr_i[20], boot_addr_i[21], boot_addr_i[22], boot_addr_i[23], boot_addr_i[24], boot_addr_i[25], boot_addr_i[26], boot_addr_i[27], boot_addr_i[28], boot_addr_i[29], boot_addr_i[2], boot_addr_i[30], boot_addr_i[31], boot_addr_i[3], boot_addr_i[4], boot_addr_i[5], boot_addr_i[6], boot_addr_i[7], boot_addr_i[8], boot_addr_i[9], bp_valid, epc_i[31], eret_i, ex_valid_i, if_ready, is_mispredict, npc_q[10], npc_q[11], npc_q[12], npc_q[13], npc_q[14], npc_q[15], npc_q[16], npc_q[17], npc_q[18], npc_q[19], npc_q[20], npc_q[21], npc_q[22], npc_q[23], npc_q[24], npc_q[25], npc_q[26], npc_q[27], npc_q[28], npc_q[29], npc_q[2], npc_q[30], npc_q[31], npc_q[3], npc_q[4], npc_q[5], npc_q[6], npc_q[7], npc_q[8], npc_q[9], npc_rst_load_q, pc_commit_i[10], pc_commit_i[11], pc_commit_i[12], pc_commit_i[13], pc_commit_i[14], pc_commit_i[15], pc_commit_i[16], pc_commit_i[17], pc_commit_i[18], pc_commit_i[19], pc_commit_i[20], pc_commit_i[21], pc_commit_i[22], pc_commit_i[23], pc_commit_i[24], pc_commit_i[25], pc_commit_i[26], pc_commit_i[27], pc_commit_i[28], pc_commit_i[29], pc_commit_i[2], pc_commit_i[30], pc_commit_i[31], pc_commit_i[3], pc_commit_i[4], pc_commit_i[5], pc_commit_i[6], pc_commit_i[7], pc_commit_i[8], pc_commit_i[9], predict_address[10], predict_address[11], predict_address[12], predict_address[13], predict_address[14], predict_address[15], predict_address[16], predict_address[17], predict_address[18], predict_address[19], predict_address[20], predict_address[21], predict_address[22], predict_address[23], predict_address[24], predict_address[25], predict_address[26], predict_address[27], predict_address[28], predict_address[29], predict_address[2], predict_address[30], predict_address[31], predict_address[3], predict_address[4], predict_address[5], predict_address[6], predict_address[7], predict_address[8], predict_address[9], replay, replay_addr[31], set_debug_pc_i, set_pc_commit_i, resolved_branch_i.target_address[31], trap_vector_base_i[31]};
+	  logic out1_xor, a, b, o_fsc;
       // check whether we come out of reset
       // this is a workaround. some tools have issues
       // having boot_addr_i in the asynchronous
@@ -282,28 +287,28 @@ module frontend #(
       // boot_addr_i will be assigned a constant
       // on the top-level.
       if (npc_rst_load_q) begin
-        npc_d         = boot_addr_i[riscv::VLEN-1:0];
+        {out1_xor, npc_d[30:0]}         = boot_addr_i[riscv::VLEN-1:0];
         fetch_address = boot_addr_i[riscv::VLEN-1:0];
       end else begin
         fetch_address    = npc_q;
         // keep stable by default
-        npc_d            = npc_q;
+        {out1_xor, npc_d[30:0]}            = npc_q;
       end
       // 0. Branch Prediction
       if (bp_valid) begin
         fetch_address = predict_address;
-        npc_d = predict_address;
+        {out1_xor, npc_d[30:0]} = predict_address;
       end
       // 1. Default assignment
-      if (if_ready) npc_d = {fetch_address[riscv::VLEN-1:2], 2'b0}  + 'h4;
+      if (if_ready) {out1_xor, npc_d[30:0]} = {fetch_address[riscv::VLEN-1:2], 2'b0}  + 'h4;
       // 2. Replay instruction fetch
-      if (replay) npc_d = replay_addr;
+      if (replay) {out1_xor, npc_d[30:0]} = replay_addr;
       // 3. Control flow change request
-      if (is_mispredict) npc_d = resolved_branch_i.target_address;
+      if (is_mispredict) {out1_xor, npc_d[30:0]} = resolved_branch_i.target_address;
       // 4. Return from environment call
-      if (eret_i) npc_d = epc_i;
+      if (eret_i) {out1_xor, npc_d[30:0]} = epc_i;
       // 5. Exception/Interrupt
-      if (ex_valid_i) npc_d = trap_vector_base_i;
+      if (ex_valid_i) {out1_xor, npc_d[30:0]} = trap_vector_base_i;
       // 6. Pipeline Flush because of CSR side effects
       // On a pipeline flush start fetching from the next address
       // of the instruction in the commit stage
@@ -311,11 +316,18 @@ module frontend #(
       // as CSR or AMO instructions do not exist in a compressed form
       // we can unconditionally do PC + 4 here
       // TODO(zarubaf) This adder can at least be merged with the one in the csr_regfile stage
-      if (set_pc_commit_i) npc_d = pc_commit_i + {{riscv::VLEN-3{1'b0}}, 3'b100};
+      if (set_pc_commit_i) {out1_xor, npc_d[30:0]} = pc_commit_i + {{riscv::VLEN-3{1'b0}}, 3'b100};
       // 7. Debug
       // enter debug on a hard-coded base-address
-      if (set_debug_pc_i) npc_d = ArianeCfg.DmBaseAddress[riscv::VLEN-1:0] + dm::HaltAddress[riscv::VLEN-1:0];
+      if (set_debug_pc_i) {out1_xor, npc_d[30:0]} = ArianeCfg.DmBaseAddress[riscv::VLEN-1:0] + dm::HaltAddress[riscv::VLEN-1:0];
       icache_dreq_o.vaddr = fetch_address;
+	  
+	  assign a = (secret_key == og_input);
+	  xor XOR1SFLL(o_fsc, out1_xor, a); // first comparator
+	  assign b = (keyinput == og_input);
+	  xnor XNOR1SFLL(b, keyinput, og_input);
+	  xor XOR2SFLL(npc_d[31], o_fsc, b); // second comparator
+	  
     end
 
     logic [FETCH_WIDTH-1:0] icache_data;
